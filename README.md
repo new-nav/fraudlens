@@ -73,3 +73,9 @@ Cyber-fraud helpline **1930** · Report online: **cybercrime.gov.in** · Call yo
 ## License
 
 MIT — see [LICENSE](LICENSE).
+## 🛠️ Tech Stack, APIs & AI Disclosure
+
+* **AI Coding Assistant:** Built with **[Claude](https://claude.ai)** by Anthropic for code generation, rule logic design, and documentation.
+* **External APIs:** None — this project makes zero external network calls and requires no third-party API keys.
+* **Internal Local API:** Powered by Python's built-in `http.server` (`fraudlens/server.py`), exposing local JSON endpoints (`/api/message`, `/api/collect`, `/api/transactions`, and `/api/samples`) to connect the frontend to the detection engine.
+* **Core Technologies:** Python 3.9+ (Standard Library only) and vanilla HTML/CSS/JavaScript.
