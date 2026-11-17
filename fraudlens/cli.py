@@ -98,7 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
     d.set_defaults(fn=cmd_demo)
 
     s = sub.add_parser("serve", help="start the local web app")
-    s.add_argument("--host", default="127.0.0.1")
+    s.add_argument("--host", default="0.0.0.0")
     s.add_argument("--port", type=int, default=8000)
     s.set_defaults(fn=cmd_serve)
     return p
