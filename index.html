@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FraudLens</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#14181f;--mute:#5b6573;--line:#e2e6ec;--acc:#1f5eff;
+        --low:#0f8a4b;--med:#b86e00;--high:#c62828;--lowbg:#e6f6ed;--medbg:#fff3dc;--highbg:#fde8e8}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f1217;--card:#181d25;--ink:#e8ecf2;--mute:#9aa5b4;--line:#2a313c;--acc:#6b95ff;
+        --low:#4cd08a;--med:#f0b04a;--high:#ff7b7b;--lowbg:#12281c;--medbg:#2d2411;--highbg:#321616}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:20px 16px 48px}
+  h1{font-size:1.5rem;margin:0}.sub{color:var(--mute);margin:.25rem 0 1rem}
+  nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  nav button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit}
+  nav button[aria-selected=true]{background:var(--acc);border-color:var(--acc);color:#fff}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  label{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
+  textarea,input[type=text],input[type=number]{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+  textarea{min-height:120px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.row{grid-template-columns:1fr}}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .go{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px 18px;font:inherit;cursor:pointer}
+  .chip{border:1px dashed var(--line);background:transparent;color:var(--mute);border-radius:999px;padding:4px 10px;font-size:.8rem;cursor:pointer}
+  .chip:hover{color:var(--ink)}
+  .verdict{border-radius:12px;padding:14px 16px;margin-top:6px}
+  .verdict.LOW{background:var(--lowbg);color:var(--low)}.verdict.MEDIUM{background:var(--medbg);color:var(--med)}.verdict.HIGH{background:var(--highbg);color:var(--high)}
+  .verdict h2{margin:0;font-size:1.2rem}
+  .bar{height:8px;background:var(--line);border-radius:4px;margin-top:8px;overflow:hidden}.bar>i{display:block;height:100%;background:currentColor}
+  ul.sig{list-style:none;padding:0;margin:12px 0 0}
+  ul.sig li{border-top:1px solid var(--line);padding:8px 0;color:var(--ink)}
+  ul.sig b{display:block}ul.sig span{color:var(--mute);font-size:.9rem}
+  .advice{margin-top:10px;padding:10px 12px;border-left:3px solid var(--acc);background:var(--bg);color:var(--ink);border-radius:4px}
+  .advice div+div{margin-top:4px}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .pill{font-size:.75rem;padding:2px 8px;border-radius:999px;font-weight:600}.pill.HIGH{background:var(--highbg);color:var(--high)}.pill.MEDIUM{background:var(--medbg);color:var(--med)}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}.stats div{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+  .stats b{display:block;font-size:1.2rem}
+  .err{color:var(--high);margin-top:8px}
+  .note{font-size:.8rem;color:var(--mute);margin-top:18px}
+  .scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔍 FraudLens</h1>
+  <p class="sub">Paste a suspicious message, check a collect request, or scan transactions. Runs on your machine; nothing is stored.</p>
+  <nav role="tablist">
+    <button role="tab" data-tab="msg" aria-selected="true">Message / SMS</button>
+    <button role="tab" data-tab="col" aria-selected="false">Collect request</button>
+    <button role="tab" data-tab="txn" aria-selected="false">Transactions</button>
+  </nav>
+
+  <section id="msg" class="card">
+    <label for="msgText">Message text (include any links)</label>
+    <textarea id="msgText" placeholder="Paste the SMS / WhatsApp / email here…"></textarea>
+    <div class="actions"><button class="go" id="msgGo">Check message</button><span id="msgSamples"></span></div>
+    <div id="msgOut"></div>
+  </section>
+
+  <section id="col" class="card" hidden>
+    <div class="row">
+      <div><label for="cVpa">Payee UPI ID</label><input id="cVpa" type="text" placeholder="name@okaxis"></div>
+      <div><label for="cAmt">Amount (₹)</label><input id="cAmt" type="number" min="0" step="1"></div>
+    </div>
+    <div class="row">
+      <div><label for="cName">Payee name shown</label><input id="cName" type="text"></div>
+      <div><label for="cTyp">Your typical payment (₹, optional)</label><input id="cTyp" type="number" min="0"></div>
+    </div>
+    <label for="cNote">Request note</label><input id="cNote" type="text">
+    <label><input id="cExp" type="checkbox"> I think I'm about to <b>receive</b> money (refund, prize, cashback…)</label>
+    <div class="actions"><button class="go" id="colGo">Check request</button><span id="colSamples"></span></div>
+    <div id="colOut"></div>
+  </section>
+
+  <section id="txn" class="card" hidden>
+    <label for="csvText">Transactions CSV (columns: id, timestamp, amount, direction, counterparty, note, device_id, city)</label>
+    <textarea id="csvText" style="min-height:140px;font-family:ui-monospace,monospace;font-size:.8rem"></textarea>
+    <div class="actions"><button class="go" id="txnGo">Scan transactions</button><button class="chip" id="loadSample">Load synthetic sample</button></div>
+    <div id="txnOut"></div>
+  </section>
+
+  <p class="note">Educational demo using rules and synthetic data. It can miss scams and can raise false alarms. If you've lost money, call <b>1930</b> or report at cybercrime.gov.in immediately.</p>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => {
+  const n = Object.assign(document.createElement(tag), props);
+  kids.flat().forEach(k => n.append(k));
+  return n;
+};
+let SAMPLES = null;
+
+async function post(url, body) {
+  const r = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'Request failed');
+  return j;
+}
+
+function renderVerdict(v) {
+  const box = el('div', {className: 'verdict ' + v.level},
+    el('h2', {textContent: `${v.label} · risk ${Math.round(v.score * 100)}%`}),
+    el('div', {className: 'bar'}, el('i', {style: `width:${Math.round(v.score * 100)}%`})));
+  const frag = el('div', {}, box);
+  if (v.signals.length) {
+    frag.append(el('ul', {className: 'sig'}, v.signals.map(s =>
+      el('li', {}, el('b', {textContent: s.title}), el('span', {textContent: s.detail})))));
+  }
+  frag.append(el('div', {className: 'advice'}, v.advice.map(a => el('div', {textContent: '→ ' + a}))));
+  return frag;
+}
+
+function show(out, node) { out.replaceChildren(node); }
+function showErr(out, e) { show(out, el('div', {className: 'err', textContent: e.message})); }
+
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-selected', x === b));
+  ['msg', 'col', 'txn'].forEach(id => $(id).hidden = id !== b.dataset.tab);
+});
+
+$('msgGo').onclick = async () => {
+  try { show($('msgOut'), renderVerdict(await post('/api/message', {text: $('msgText').value}))); }
+  catch (e) { showErr($('msgOut'), e); }
+};
+
+$('colGo').onclick = async () => {
+  try {
+    show($('colOut'), renderVerdict(await post('/api/collect', {
+      vpa: $('cVpa').value, amount: $('cAmt').value, name: $('cName').value, note: $('cNote').value,
+      typical: $('cTyp').value, expecting_money: $('cExp').checked})));
+  } catch (e) { showErr($('colOut'), e); }
+};
+
+$('txnGo').onclick = async () => {
+  try {
+    const j = await post('/api/transactions', {csv: $('csvText').value});
+    const s = j.summary, out = el('div');
+    out.append(el('div', {className: 'stats'},
+      [['Scanned', s.total], ['High risk', s.high], ['Suspicious', s.medium], ['₹ flagged', s.amount_at_risk.toLocaleString('en-IN')]]
+        .map(([k, v]) => el('div', {}, el('b', {textContent: v}), k))));
+    const flagged = j.alerts.filter(a => a.level !== 'LOW');
+    if (!flagged.length) out.append(el('p', {textContent: 'Nothing suspicious found.'}));
+    else out.append(el('div', {className: 'scroll'}, el('table', {},
+      el('thead', {}, el('tr', {}, ['ID', 'When', 'Amount', 'Payee', 'Risk', 'Why'].map(h => el('th', {textContent: h})))),
+      el('tbody', {}, flagged.map(a => el('tr', {},
+        el('td', {textContent: a.id}), el('td', {textContent: a.timestamp.slice(5, 16)}),
+        el('td', {textContent: (a.direction === 'credit' ? '+' : '−') + '₹' + a.amount.toLocaleString('en-IN')}),
+        el('td', {textContent: a.counterparty}),
+        el('td', {}, el('span', {className: 'pill ' + a.level, textContent: a.label})),
+        el('td', {textContent: a.signals.map(x => x.title).join('; ')})))))));
+    show($('txnOut'), out);
+  } catch (e) { showErr($('txnOut'), e); }
+};
+
+$('loadSample').onclick = () => { if (SAMPLES) $('csvText').value = SAMPLES.csv; };
+
+fetch('/api/samples').then(r => r.json()).then(s => {
+  SAMPLES = s;
+  $('csvText').value = s.csv;
+  Object.entries(s.messages).forEach(([name, text]) =>
+    $('msgSamples').append(el('button', {className: 'chip', textContent: name, onclick: () => { $('msgText').value = text; $('msgGo').click(); }}), ' '));
+  Object.entries(s.collect).forEach(([name, c]) =>
+    $('colSamples').append(el('button', {className: 'chip', textContent: name, onclick: () => {
+      $('cVpa').value = c.vpa; $('cAmt').value = c.amount; $('cName').value = c.name; $('cNote').value = c.note;
+      $('cExp').checked = c.expecting_money; $('colGo').click(); }}), ' '));
+});
+</script>
+</body>
+</html>
