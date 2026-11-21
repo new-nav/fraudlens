@@ -79,3 +79,5 @@ MIT — see [LICENSE](LICENSE).
 * **External APIs:** None — this project makes zero external network calls and requires no third-party API keys.
 * **Internal Local API:** Powered by Python's built-in `http.server` (`fraudlens/server.py`), exposing local JSON endpoints (`/api/message`, `/api/collect`, `/api/transactions`, and `/api/samples`) to connect the frontend to the detection engine.
 * **Core Technologies:** Python 3.9+ (Standard Library only) and vanilla HTML/CSS/JavaScript.
+## 🎥 Demo video
+Watch the demo here: [FraudLens demo video](https://youtu.be/gw5yIYvpUYw?si=ehLDWPj0IwZx2V0N)
