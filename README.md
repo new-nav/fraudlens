@@ -80,4 +80,4 @@ MIT — see [LICENSE](LICENSE).
 * **Internal Local API:** Powered by Python's built-in `http.server` (`fraudlens/server.py`), exposing local JSON endpoints (`/api/message`, `/api/collect`, `/api/transactions`, and `/api/samples`) to connect the frontend to the detection engine.
 * **Core Technologies:** Python 3.9+ (Standard Library only) and vanilla HTML/CSS/JavaScript.
 ## 🎥 Demo video
-Watch the demo here: [FraudLens demo video](https://youtu.be/ivsxC-lvslY?si=LM08vk5wTMd2AQt7)
+Watch the demo here: [FraudLens demo video](https://youtu.be/6RY0QgasA9Q?si=T88AgWL8PPofxIdJ)
